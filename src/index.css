@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --navy:      #1E3A5F;
+    --navy-mid:  #2A4D7A;
+    --blue:      #3B6FA0;
+    --sky:       #7AADCC;
+    --cream:     #FAFAF8;
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #FAFAF8;
+    color: #2D2D2D;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #FAFAF8; }
+  ::-webkit-scrollbar-thumb { background: #7AADCC; border-radius: 99px; }
+
+  ::selection { background: #7AADCC; color: #fff; }
+}
+
+@layer components {
+  .section-label {
+    @apply inline-block text-[11px] font-bold uppercase tracking-[2.5px] text-navy-light
+           bg-[rgba(59,111,160,0.08)] px-3 py-1.5 rounded-full mb-3;
+  }
+
+  .section-title {
+    @apply font-serif text-3xl md:text-[42px] font-bold text-navy leading-[1.15] tracking-tight mb-3;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center gap-2 bg-gradient-navy text-white font-semibold
+           px-6 py-3 rounded-xl shadow-glow-blue transition-all duration-200
+           hover:-translate-y-0.5 hover:shadow-glow-blue-lg active:translate-y-0 text-sm;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 bg-transparent text-navy font-semibold
+           px-6 py-3 rounded-xl border border-[#D0D6E0] transition-all duration-200
+           hover:bg-white hover:border-navy-light hover:text-navy-light text-sm;
+  }
+}
+
+/* Marquee pause-on-hover */
+.marquee-track:hover { animation-play-state: paused; }
+
+/* Custom select arrow hide */
+select { -webkit-appearance: none; appearance: none; }
+
+/* Gradient text utility */
+.text-gradient-blue {
+  background: linear-gradient(135deg, #3B6FA0, #7AADCC);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-purple {
+  background: linear-gradient(135deg, #5A3D8A, #2A4D7A);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
