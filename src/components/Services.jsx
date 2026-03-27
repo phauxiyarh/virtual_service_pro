@@ -1,24 +1,21 @@
-import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { useRef, useState } from 'react'
+import { motion, useInView, useMotionValue, useSpring, useTransform } from 'framer-motion'
 
 const services = [
   {
     icon: '📋', name: 'Administrative Support', color: 'bg-[#EBF3FA]',
     desc: 'Seamless back-office management so you can focus on what moves the needle.',
     tags: ['Data Entry & Management', 'Calendar Management', 'Research & Analysis', 'Email Management'],
-    featured: false,
   },
   {
     icon: '🎨', name: 'Graphic Design', color: 'bg-[#FFF3E0]',
     desc: 'Visual assets that communicate your brand with clarity and elegance.',
     tags: ['Social Media Graphics', 'Workbooks & Posters', 'Presentation Design', 'Brand Assets'],
-    featured: false,
   },
   {
     icon: '📱', name: 'Social Media Support', color: 'bg-[#E8F5EB]',
     desc: 'Strategic content planning and community growth across all platforms.',
     tags: ['Content Research', 'Content Calendar', 'Post Scheduling', 'Community Management'],
-    featured: false,
   },
   {
     icon: '📊', name: 'Data Analytics', color: 'bg-[#F0E8FF]',
@@ -26,7 +23,7 @@ const services = [
     tags: ['Python · R · SQL', 'Power BI & Tableau', 'BigQuery Pipelines', 'KPI & Predictive Reports'],
     featured: true,
     badge: 'Most Popular',
-    badgeClass: 'bg-gradient-to-br from-purple to-[#7B52B8]',
+    badgeClass: 'from-purple to-[#7B52B8]',
   },
   {
     icon: '🤖', name: 'AI & Automation', color: 'bg-[#E0F5F2]',
@@ -34,55 +31,129 @@ const services = [
     tags: ['ML Pipeline Setup', 'AI Workflow (Zapier/Make)', 'ETL Automation', 'Chatbot & AI Tools'],
     featured: true,
     badge: 'High Impact',
-    badgeClass: 'bg-gradient-to-br from-teal to-[#12A090]',
+    badgeClass: 'from-teal to-[#12A090]',
   },
 ]
 
-function ServiceCard({ s, index }) {
+function TiltCard({ children, className }) {
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-60px' })
+  const x = useMotionValue(0.5)
+  const y = useMotionValue(0.5)
+  const [hovering, setHovering] = useState(false)
+
+  const rotateX = useSpring(useTransform(y, [0, 1], [6, -6]),  { stiffness: 300, damping: 30 })
+  const rotateY = useSpring(useTransform(x, [0, 1], [-6, 6]),  { stiffness: 300, damping: 30 })
+  const glareX  = useTransform(x, [0, 1], [0, 100])
+  const glareY  = useTransform(y, [0, 1], [0, 100])
+
+  const handleMove = (e) => {
+    const rect = ref.current?.getBoundingClientRect()
+    if (!rect) return
+    x.set((e.clientX - rect.left) / rect.width)
+    y.set((e.clientY - rect.top) / rect.height)
+  }
+
+  const handleLeave = () => {
+    setHovering(false)
+    x.set(0.5)
+    y.set(0.5)
+  }
 
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 32 }}
+      onMouseMove={handleMove}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={handleLeave}
+      style={{ rotateX, rotateY, transformPerspective: 800 }}
+      className={`relative ${className}`}
+    >
+      {/* Glare overlay */}
+      {hovering && (
+        <motion.div
+          className="absolute inset-0 rounded-[20px] pointer-events-none z-10"
+          style={{
+            background: useTransform(
+              [glareX, glareY],
+              ([gx, gy]) => `radial-gradient(circle at ${gx}% ${gy}%, rgba(255,255,255,0.12) 0%, transparent 60%)`
+            ),
+          }}
+        />
+      )}
+      {children}
+    </motion.div>
+  )
+}
+
+function ServiceCard({ s, index }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-60px' })
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 36 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.65, delay: index * 0.08, ease: [0.22,1,0.36,1] }}
-      className={`relative rounded-[20px] p-7 border-[1.5px] transition-all duration-300
-                  hover:-translate-y-1.5 hover:shadow-card-lg group cursor-pointer
-                  ${s.featured
-                    ? 'bg-gradient-to-br from-[#F0F5FF] to-[#F8F0FF] border-[rgba(90,61,138,0.2)] hover:border-[rgba(90,61,138,0.4)]'
-                    : 'bg-cream border-[#E4E8EF] hover:border-[rgba(122,173,204,0.5)]'
-                  }`}
     >
-      {s.badge && (
-        <span className={`absolute top-4 right-4 text-[10px] font-bold uppercase tracking-[0.8px] text-white px-2.5 py-1 rounded-full ${s.badgeClass}`}>
-          {s.badge}
-        </span>
-      )}
+      <TiltCard
+        featured={s.featured}
+        className={`rounded-[20px] p-7 border-[1.5px] transition-all duration-300
+                    cursor-pointer group overflow-hidden
+                    ${s.featured
+                      ? 'bg-gradient-to-br from-[#F0F5FF] to-[#F8F0FF] border-[rgba(90,61,138,0.2)] hover:border-[rgba(90,61,138,0.4)]'
+                      : 'bg-cream border-[#E4E8EF] hover:border-[rgba(122,173,204,0.5)]'
+                    }
+                    hover:shadow-card-lg`}
+      >
+        {s.badge && (
+          <span className={`absolute top-4 right-4 z-20 text-[10px] font-bold uppercase tracking-[0.8px] text-white px-2.5 py-1 rounded-full bg-gradient-to-br ${s.badgeClass}`}>
+            {s.badge}
+          </span>
+        )}
 
-      {/* Icon */}
-      <div className={`w-12 h-12 ${s.color} rounded-[12px] flex items-center justify-center text-2xl mb-4 transition-transform duration-300 group-hover:scale-110`}>
-        {s.icon}
-      </div>
+        {/* Animated icon */}
+        <motion.div
+          whileHover={{ scale: 1.15, rotate: 5 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+          className={`w-12 h-12 ${s.color} rounded-[12px] flex items-center justify-center text-2xl mb-4`}
+        >
+          {s.icon}
+        </motion.div>
 
-      <h3 className="text-[13.5px] font-bold text-navy uppercase tracking-[0.7px] mb-2">{s.name}</h3>
-      <p className="text-[13px] text-ink-soft leading-[1.68] mb-4">{s.desc}</p>
+        <h3 className="text-[13.5px] font-bold text-navy uppercase tracking-[0.7px] mb-2 group-hover:text-navy-light transition-colors">
+          {s.name}
+        </h3>
+        <p className="text-[13px] text-ink-soft leading-[1.68] mb-4">{s.desc}</p>
 
-      <ul className="flex flex-wrap gap-1.5 mb-5">
-        {s.tags.map(tag => (
-          <li key={tag}
-              className="text-[11.5px] bg-white border border-[#E4E8EF] text-ink-soft px-2.5 py-1 rounded-full">
-            {tag}
-          </li>
-        ))}
-      </ul>
+        <ul className="flex flex-wrap gap-1.5 mb-5">
+          {s.tags.map((tag, i) => (
+            <motion.li
+              key={tag}
+              initial={inView ? { opacity: 0, scale: 0.8 } : false}
+              animate={inView ? { opacity: 1, scale: 1 } : false}
+              transition={{ delay: index * 0.08 + i * 0.05 + 0.3 }}
+              className="text-[11.5px] bg-white border border-[#E4E8EF] text-ink-soft px-2.5 py-1 rounded-full
+                         hover:border-sky/50 hover:bg-sky/5 transition-colors duration-200 cursor-default"
+            >
+              {tag}
+            </motion.li>
+          ))}
+        </ul>
 
-      <a href="#contact"
-         className="inline-flex items-center text-[12.5px] font-semibold text-navy-light hover:text-navy transition-colors gap-1 group/link">
-        Request this service
-        <span className="transition-transform duration-200 group-hover/link:translate-x-1">→</span>
-      </a>
+        <a
+          href="#contact"
+          className="inline-flex items-center text-[12.5px] font-semibold text-navy-light hover:text-navy transition-colors gap-1.5 group/link"
+          onClick={(e) => e.stopPropagation()}
+        >
+          Request this service
+          <motion.span
+            className="inline-block"
+            whileHover={{ x: 4 }}
+          >
+            →
+          </motion.span>
+        </a>
+      </TiltCard>
     </motion.div>
   )
 }

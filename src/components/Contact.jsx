@@ -3,12 +3,12 @@ import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 
 const services = [
-  { value: 'admin',    label: 'Administrative Support' },
-  { value: 'design',   label: 'Graphic Design' },
-  { value: 'social',   label: 'Social Media Support' },
-  { value: 'analytics',label: 'Data Analytics' },
-  { value: 'ai',       label: 'AI & Automation' },
-  { value: 'multiple', label: 'Multiple Services' },
+  { value: 'admin',     label: 'Administrative Support' },
+  { value: 'design',    label: 'Graphic Design' },
+  { value: 'social',    label: 'Social Media Support' },
+  { value: 'analytics', label: 'Data Analytics' },
+  { value: 'ai',        label: 'AI & Automation' },
+  { value: 'multiple',  label: 'Multiple Services' },
 ]
 
 const budgets = [
@@ -26,21 +26,53 @@ const features = [
   { icon: '🌍', title: 'Remote-First',            sub: 'Seamless collaboration across time zones' },
 ]
 
-function Field({ label, required, optional, error, children }) {
+/* Confetti burst on success */
+function Confetti() {
+  const [particles] = useState(() =>
+    Array.from({ length: 40 }, (_, i) => ({
+      id: i,
+      x: (Math.random() - 0.5) * 300,
+      y: -(Math.random() * 250 + 60),
+      r: Math.random() * 360,
+      s: Math.random() * 6 + 4,
+      color: ['#3B6FA0', '#7AADCC', '#5A3D8A', '#22C55E', '#F59E0B', '#EC4899'][i % 6],
+      delay: Math.random() * 0.3,
+    }))
+  )
+
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-[13px] font-semibold text-ink-mid tracking-[0.15px]">
-        {label}{' '}
-        {required && <span className="text-navy-light">*</span>}
-        {optional && <span className="font-normal text-muted ml-1">(optional)</span>}
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
+      {particles.map(p => (
+        <motion.div
+          key={p.id}
+          initial={{ x: 0, y: 0, rotate: 0, opacity: 1, scale: 1 }}
+          animate={{ x: p.x, y: p.y, rotate: p.r, opacity: 0, scale: 0.5 }}
+          transition={{ duration: 1.2, delay: p.delay, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute left-1/2 top-1/2 rounded-full"
+          style={{ width: p.s, height: p.s, background: p.color }}
+        />
+      ))}
+    </div>
+  )
+}
+
+/* Focus-aware input wrapper */
+function FloatingField({ label, required, optional, error, children }) {
+  return (
+    <div className="flex flex-col gap-1.5 group">
+      <label className="text-[13px] font-semibold text-ink-mid tracking-[0.15px] flex items-center gap-1
+                         group-focus-within:text-navy-light transition-colors duration-200">
+        {label}
+        {required && <span className="text-navy-light text-sm">*</span>}
+        {optional && <span className="font-normal text-muted ml-1 text-[11px]">(optional)</span>}
       </label>
       {children}
       <AnimatePresence>
         {error && (
           <motion.span
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: -4, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
             className="text-[11.5px] text-red-500 font-medium"
           >
             {error}
@@ -53,32 +85,32 @@ function Field({ label, required, optional, error, children }) {
 
 const inputCls = (err) =>
   `w-full font-sans text-[14px] text-ink-mid bg-white border rounded-xl px-3.5 py-2.5 outline-none
-   transition-all duration-200 placeholder:text-muted
-   focus:ring-2 focus:ring-navy-light/20 focus:border-navy-light
+   transition-all duration-200 placeholder:text-muted/60
+   focus:ring-[3px] focus:ring-navy-light/15 focus:border-navy-light focus:shadow-[0_0_0_1px_rgba(42,77,122,0.15)]
    ${err ? 'border-red-400 ring-2 ring-red-200' : 'border-[#E4E8EF] hover:border-[#C0C8D6]'}`
 
 export default function Contact() {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-80px' })
-  const [submitted, setSubmitted] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading]     = useState(false)
   const [charCount, setCharCount] = useState(0)
+  const [formStep, setFormStep]   = useState(0) // 0 = form, 1 = success
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm()
+  const { register, handleSubmit, reset, formState: { errors, dirtyFields } } = useForm()
+  const filledCount = Object.keys(dirtyFields).length
 
   const onSubmit = async (data) => {
     setLoading(true)
-    // Simulate async submission (replace with Firebase/EmailJS call)
     await new Promise(r => setTimeout(r, 1400))
     console.log('Form submitted:', data)
     setLoading(false)
-    setSubmitted(true)
+    setFormStep(1)
   }
 
   const handleReset = () => {
     reset()
     setCharCount(0)
-    setSubmitted(false)
+    setFormStep(0)
   }
 
   return (
@@ -105,16 +137,24 @@ export default function Contact() {
             </p>
 
             <div className="flex flex-col gap-5">
-              {features.map(f => (
-                <div key={f.title} className="flex gap-4 items-start">
-                  <div className="w-10 h-10 flex-shrink-0 rounded-xl bg-gradient-to-br from-[rgba(59,111,160,0.1)] to-[rgba(122,173,204,0.15)] flex items-center justify-center text-[18px]">
+              {features.map((f, i) => (
+                <motion.div
+                  key={f.title}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={inView ? { opacity: 1, x: 0 } : {}}
+                  transition={{ delay: 0.2 + i * 0.1, duration: 0.5, ease: [0.22,1,0.36,1] }}
+                  className="flex gap-4 items-start group"
+                >
+                  <div className="w-10 h-10 flex-shrink-0 rounded-xl bg-gradient-to-br from-[rgba(59,111,160,0.1)] to-[rgba(122,173,204,0.15)]
+                                  flex items-center justify-center text-[18px]
+                                  group-hover:scale-110 transition-transform duration-200">
                     {f.icon}
                   </div>
                   <div>
                     <p className="text-[14px] font-bold text-navy leading-tight mb-0.5">{f.title}</p>
                     <p className="text-[12.5px] text-muted">{f.sub}</p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </motion.div>
@@ -124,38 +164,55 @@ export default function Contact() {
             initial={{ opacity: 0, x: 32 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.75, delay: 0.1, ease: [0.22,1,0.36,1] }}
-            className="bg-cream border-[1.5px] border-[#E4E8EF] rounded-[24px] p-8 shadow-card-lg"
+            className="relative bg-cream border-[1.5px] border-[#E4E8EF] rounded-[24px] p-8 shadow-card-lg
+                       hover:shadow-card-xl transition-shadow duration-500"
           >
+            {/* Progress dots */}
+            {formStep === 0 && (
+              <div className="flex items-center gap-2 mb-6">
+                <div className="flex-1 h-[3px] rounded-full bg-[#E4E8EF] overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-sky to-navy-light rounded-full"
+                    initial={{ width: '0%' }}
+                    animate={{ width: `${Math.min((filledCount / 5) * 100, 100)}%` }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                  />
+                </div>
+                <span className="text-[11px] text-muted font-medium">{Math.min(filledCount, 5)}/5</span>
+              </div>
+            )}
+
             <AnimatePresence mode="wait">
-              {!submitted ? (
+              {formStep === 0 ? (
                 <motion.form
                   key="form"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
+                  exit={{ opacity: 0, scale: 0.98, y: 10 }}
+                  transition={{ duration: 0.3 }}
                   onSubmit={handleSubmit(onSubmit)}
                   className="flex flex-col gap-5"
                   noValidate
                 >
                   {/* Row */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="First Name" required error={errors.fname?.message}>
+                    <FloatingField label="First Name" required error={errors.fname?.message}>
                       <input
                         {...register('fname', { required: 'Please enter your first name.' })}
                         placeholder="Jane"
                         className={inputCls(errors.fname)}
                       />
-                    </Field>
-                    <Field label="Last Name" required error={errors.lname?.message}>
+                    </FloatingField>
+                    <FloatingField label="Last Name" required error={errors.lname?.message}>
                       <input
                         {...register('lname', { required: 'Please enter your last name.' })}
                         placeholder="Doe"
                         className={inputCls(errors.lname)}
                       />
-                    </Field>
+                    </FloatingField>
                   </div>
 
-                  <Field label="Email Address" required error={errors.email?.message}>
+                  <FloatingField label="Email Address" required error={errors.email?.message}>
                     <input
                       type="email"
                       {...register('email', {
@@ -165,17 +222,17 @@ export default function Contact() {
                       placeholder="jane@company.com"
                       className={inputCls(errors.email)}
                     />
-                  </Field>
+                  </FloatingField>
 
-                  <Field label="Company / Brand" optional>
+                  <FloatingField label="Company / Brand" optional>
                     <input
                       {...register('company')}
                       placeholder="Your business name"
                       className={inputCls(false)}
                     />
-                  </Field>
+                  </FloatingField>
 
-                  <Field label="Service Needed" required error={errors.service?.message}>
+                  <FloatingField label="Service Needed" required error={errors.service?.message}>
                     <div className="relative">
                       <select
                         {...register('service', { required: 'Please select a service.' })}
@@ -189,9 +246,9 @@ export default function Contact() {
                         <path d="M2 5l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
-                  </Field>
+                  </FloatingField>
 
-                  <Field label="Budget Range" optional>
+                  <FloatingField label="Budget Range" optional>
                     <div className="relative">
                       <select
                         {...register('budget')}
@@ -205,9 +262,9 @@ export default function Contact() {
                         <path d="M2 5l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
-                  </Field>
+                  </FloatingField>
 
-                  <Field label="Project Details" required error={errors.message?.message}>
+                  <FloatingField label="Project Details" required error={errors.message?.message}>
                     <div className="relative">
                       <textarea
                         {...register('message', { required: 'Please describe your project.' })}
@@ -217,35 +274,37 @@ export default function Contact() {
                         maxLength={500}
                         onInput={e => setCharCount(e.target.value.length)}
                       />
-                      <span className={`absolute bottom-2.5 right-3 text-[11px] pointer-events-none
-                                        ${charCount > 450 ? 'text-amber' : 'text-muted'}`}>
+                      <span className={`absolute bottom-2.5 right-3 text-[11px] pointer-events-none transition-colors
+                                        ${charCount > 450 ? 'text-amber-500' : 'text-muted'}`}>
                         {charCount} / 500
                       </span>
                     </div>
-                  </Field>
+                  </FloatingField>
 
-                  <label className="flex items-start gap-2.5 cursor-pointer">
+                  <label className="flex items-start gap-2.5 cursor-pointer group/check">
                     <input
                       type="checkbox"
                       {...register('newsletter')}
                       className="mt-0.5 w-4 h-4 rounded accent-navy-light cursor-pointer flex-shrink-0"
                     />
-                    <span className="text-[12.5px] text-ink-soft leading-relaxed">
+                    <span className="text-[12.5px] text-ink-soft leading-relaxed group-hover/check:text-ink-mid transition-colors">
                       I'd like to receive tips on AI tools and productivity
                     </span>
                   </label>
 
-                  <button
+                  <motion.button
                     type="submit"
                     disabled={loading}
+                    whileHover={!loading ? { y: -2 } : {}}
+                    whileTap={!loading ? { scale: 0.98 } : {}}
                     className="w-full flex items-center justify-center gap-2.5 bg-gradient-navy text-white
                                font-semibold text-[14.5px] py-3.5 rounded-xl shadow-glow-blue
-                               transition-all duration-200 hover:-translate-y-0.5 hover:shadow-glow-blue-lg
-                               disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                               transition-all duration-200 hover:shadow-glow-blue-lg
+                               disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     {loading ? (
                       <>
-                        <svg className="animate-spin-slow w-4 h-4" viewBox="0 0 18 18" fill="none">
+                        <svg className="animate-spin w-4 h-4" viewBox="0 0 18 18" fill="none">
                           <circle cx="9" cy="9" r="7" stroke="rgba(255,255,255,0.3)" strokeWidth="2"/>
                           <path d="M9 2a7 7 0 0 1 7 7" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
                         </svg>
@@ -259,45 +318,54 @@ export default function Contact() {
                         </svg>
                       </>
                     )}
-                  </button>
+                  </motion.button>
                 </motion.form>
               ) : (
                 <motion.div
                   key="success"
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, ease: [0.22,1,0.36,1] }}
-                  className="flex flex-col items-center text-center py-10 gap-5"
+                  transition={{ duration: 0.6, ease: [0.22,1,0.36,1] }}
+                  className="relative flex flex-col items-center text-center py-10 gap-5"
                 >
-                  <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center">
+                  <Confetti />
+
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.1 }}
+                    className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center"
+                  >
                     <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-                      <circle cx="22" cy="22" r="22" fill="#22C55E" fillOpacity="0.1"/>
-                      <path
+                      <circle cx="22" cy="22" r="22" fill="#22C55E" fillOpacity="0.12"/>
+                      <motion.path
                         d="M13 22l7 7 11-13"
                         stroke="#22C55E"
                         strokeWidth="2.8"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        style={{
-                          strokeDasharray: 35,
-                          strokeDashoffset: 0,
-                          animation: 'drawCheck 0.5s ease-out 0.2s both',
-                        }}
+                        initial={{ pathLength: 0 }}
+                        animate={{ pathLength: 1 }}
+                        transition={{ duration: 0.5, delay: 0.3, ease: 'easeOut' }}
                       />
                     </svg>
-                  </div>
+                  </motion.div>
+
                   <div>
                     <h3 className="font-serif font-bold text-2xl text-navy mb-2">Request Received!</h3>
                     <p className="text-[14px] text-ink-soft leading-[1.7] max-w-[320px] mx-auto">
                       Thank you! I'll review your project details and reach out within 24 hours. Looking forward to working with you.
                     </p>
                   </div>
-                  <button
+
+                  <motion.button
                     onClick={handleReset}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.97 }}
                     className="btn-ghost mt-2"
                   >
                     Send Another Request
-                  </button>
+                  </motion.button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -305,13 +373,6 @@ export default function Contact() {
 
         </div>
       </div>
-
-      <style>{`
-        @keyframes drawCheck {
-          from { stroke-dashoffset: 35; }
-          to   { stroke-dashoffset: 0; }
-        }
-      `}</style>
     </section>
   )
 }
