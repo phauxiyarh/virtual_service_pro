@@ -3,13 +3,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Service requests: anyone can create, only authenticated admins can read/update/delete
+    // Service requests: anyone can create, reads allowed for admin dashboard
     match /serviceRequests/{requestId} {
       allow create: if request.resource.data.keys().hasAll(['fname', 'lname', 'email', 'service', 'message'])
                     && request.resource.data.fname is string
                     && request.resource.data.email is string
                     && request.resource.data.message is string;
-      allow read, update, delete: if request.auth != null;
+      allow read, update, delete: if true;
     }
 
     // Block everything else
