@@ -43,8 +43,10 @@ function TiltCard({ children, className }) {
 
   const rotateX = useSpring(useTransform(y, [0, 1], [6, -6]),  { stiffness: 300, damping: 30 })
   const rotateY = useSpring(useTransform(x, [0, 1], [-6, 6]),  { stiffness: 300, damping: 30 })
-  const glareX  = useTransform(x, [0, 1], [0, 100])
-  const glareY  = useTransform(y, [0, 1], [0, 100])
+  const glareBackground = useTransform(
+    [useTransform(x, [0, 1], [0, 100]), useTransform(y, [0, 1], [0, 100])],
+    ([gx, gy]) => `radial-gradient(circle at ${gx}% ${gy}%, rgba(255,255,255,0.12) 0%, transparent 60%)`
+  )
 
   const handleMove = (e) => {
     const rect = ref.current?.getBoundingClientRect()
@@ -69,17 +71,10 @@ function TiltCard({ children, className }) {
       className={`relative ${className}`}
     >
       {/* Glare overlay */}
-      {hovering && (
-        <motion.div
-          className="absolute inset-0 rounded-[20px] pointer-events-none z-10"
-          style={{
-            background: useTransform(
-              [glareX, glareY],
-              ([gx, gy]) => `radial-gradient(circle at ${gx}% ${gy}%, rgba(255,255,255,0.12) 0%, transparent 60%)`
-            ),
-          }}
-        />
-      )}
+      <motion.div
+        className="absolute inset-0 rounded-[20px] pointer-events-none z-10"
+        style={{ background: glareBackground, opacity: hovering ? 1 : 0 }}
+      />
       {children}
     </motion.div>
   )
