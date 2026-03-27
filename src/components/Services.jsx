@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { motion, useInView, useMotionValue, useSpring, useTransform } from 'framer-motion'
+import { motion, useInView, useMotionValue, useSpring } from 'framer-motion'
 
 const services = [
   {
@@ -37,43 +37,41 @@ const services = [
 
 function TiltCard({ children, className }) {
   const ref = useRef(null)
-  const x = useMotionValue(0.5)
-  const y = useMotionValue(0.5)
-  const [hovering, setHovering] = useState(false)
-
-  const rotateX = useSpring(useTransform(y, [0, 1], [6, -6]),  { stiffness: 300, damping: 30 })
-  const rotateY = useSpring(useTransform(x, [0, 1], [-6, 6]),  { stiffness: 300, damping: 30 })
-  const glareBackground = useTransform(
-    [useTransform(x, [0, 1], [0, 100]), useTransform(y, [0, 1], [0, 100])],
-    ([gx, gy]) => `radial-gradient(circle at ${gx}% ${gy}%, rgba(255,255,255,0.12) 0%, transparent 60%)`
-  )
+  const rotateX = useMotionValue(0)
+  const rotateY = useMotionValue(0)
+  const springRotateX = useSpring(rotateX, { stiffness: 300, damping: 30 })
+  const springRotateY = useSpring(rotateY, { stiffness: 300, damping: 30 })
+  const glareOpacity = useMotionValue(0)
+  const [glareStyle, setGlareStyle] = useState('')
 
   const handleMove = (e) => {
     const rect = ref.current?.getBoundingClientRect()
     if (!rect) return
-    x.set((e.clientX - rect.left) / rect.width)
-    y.set((e.clientY - rect.top) / rect.height)
+    const px = (e.clientX - rect.left) / rect.width
+    const py = (e.clientY - rect.top) / rect.height
+    rotateX.set((py - 0.5) * -12)
+    rotateY.set((px - 0.5) * 12)
+    glareOpacity.set(1)
+    setGlareStyle(`radial-gradient(circle at ${px * 100}% ${py * 100}%, rgba(255,255,255,0.12) 0%, transparent 60%)`)
   }
 
   const handleLeave = () => {
-    setHovering(false)
-    x.set(0.5)
-    y.set(0.5)
+    rotateX.set(0)
+    rotateY.set(0)
+    glareOpacity.set(0)
   }
 
   return (
     <motion.div
       ref={ref}
       onMouseMove={handleMove}
-      onMouseEnter={() => setHovering(true)}
       onMouseLeave={handleLeave}
-      style={{ rotateX, rotateY, transformPerspective: 800 }}
+      style={{ rotateX: springRotateX, rotateY: springRotateY, transformPerspective: 800 }}
       className={`relative ${className}`}
     >
-      {/* Glare overlay */}
       <motion.div
-        className="absolute inset-0 rounded-[20px] pointer-events-none z-10"
-        style={{ background: glareBackground, opacity: hovering ? 1 : 0 }}
+        className="absolute inset-0 rounded-[20px] pointer-events-none z-10 transition-opacity duration-200"
+        style={{ background: glareStyle, opacity: glareOpacity }}
       />
       {children}
     </motion.div>

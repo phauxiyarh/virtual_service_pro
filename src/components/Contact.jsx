@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { useForm } from 'react-hook-form'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { db } from '../firebase'
 
 const services = [
   { value: 'admin',     label: 'Administrative Support' },
@@ -101,10 +103,19 @@ export default function Contact() {
 
   const onSubmit = async (data) => {
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1400))
-    console.log('Form submitted:', data)
-    setLoading(false)
-    setFormStep(1)
+    try {
+      await addDoc(collection(db, 'serviceRequests'), {
+        ...data,
+        createdAt: serverTimestamp(),
+        status: 'new',
+      })
+      setFormStep(1)
+    } catch (err) {
+      console.error('Firestore write failed:', err)
+      alert('Something went wrong. Please try again or email phauzee97@gmail.com directly.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleReset = () => {
