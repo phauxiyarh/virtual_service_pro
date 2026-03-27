@@ -21,7 +21,7 @@ const socials = [
   },
 ]
 
-export default function Footer() {
+export default function Footer({ onAdminOpen }) {
   return (
     <footer className="relative bg-navy overflow-hidden">
       {/* Animated wave top */}
@@ -67,26 +67,34 @@ export default function Footer() {
         {/* Divider */}
         <div className="my-8 h-[1px] bg-white/[0.08]" />
 
-        {/* Bottom row */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+        {/* Bottom row — 3 columns: copyright | admin icon | location */}
+        <div className="grid grid-cols-3 items-center gap-4">
           <p className="text-white/35 text-[13px]">
             © {new Date().getFullYear()} Fauwzziyyah Umar · Automate. Optimize.{' '}
             <em className="text-white/60 font-serif italic">Grow.</em>
           </p>
-          <div className="flex items-center gap-3">
-            <p className="text-white/25 text-[11px]">
-              Maryland, USA · Remote-first
-            </p>
-            <a
-              href="#admin"
-              className="text-white/[0.08] hover:text-white/30 transition-colors duration-300"
-              aria-label="Admin"
+
+          {/* Center admin icon */}
+          <div className="flex justify-center">
+            <motion.button
+              onClick={onAdminOpen}
+              whileHover={{ scale: 1.2, rotate: 90 }}
+              whileTap={{ scale: 0.9 }}
+              className="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.10]
+                         flex items-center justify-center text-white/[0.12] hover:text-white/40
+                         transition-colors duration-500 cursor-pointer"
+              aria-label="Admin Portal"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
               </svg>
-            </a>
+            </motion.button>
           </div>
+
+          <p className="text-white/25 text-[11px] text-right">
+            Maryland, USA · Remote-first
+          </p>
         </div>
       </div>
     </footer>

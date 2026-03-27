@@ -31,7 +31,7 @@ const statusColors = {
   archived:    'bg-gray-100 text-gray-500',
 }
 
-function LoginScreen({ onLogin }) {
+function LoginScreen({ onLogin, onExit }) {
   const [user, setUser] = useState('')
   const [pass, setPass] = useState('')
   const [error, setError] = useState('')
@@ -185,9 +185,9 @@ function LoginScreen({ onLogin }) {
           </form>
         </div>
 
-        <a href="#about" className="block text-center text-white/25 text-[12px] mt-6 hover:text-white/50 transition-colors">
+        <button onClick={onExit} className="block mx-auto text-white/25 text-[12px] mt-6 hover:text-white/50 transition-colors">
           ← Back to website
-        </a>
+        </button>
       </motion.div>
     </div>
   )
@@ -314,7 +314,7 @@ function RequestCard({ req, onStatusChange, onDelete }) {
   )
 }
 
-function Dashboard({ onLogout }) {
+function Dashboard({ onLogout, onExit }) {
   const [requests, setRequests] = useState([])
   const [loading, setLoading]   = useState(true)
   const [filter, setFilter]     = useState('all')
@@ -374,9 +374,9 @@ function Dashboard({ onLogout }) {
           </div>
 
           <div className="flex items-center gap-3">
-            <a href="#about" className="text-[12px] text-muted hover:text-navy transition-colors font-medium">
+            <button onClick={onExit} className="text-[12px] text-muted hover:text-navy transition-colors font-medium">
               ← Website
-            </a>
+            </button>
             <button
               onClick={() => { sessionStorage.removeItem('fu_admin'); onLogout() }}
               className="flex items-center gap-1.5 text-[12px] font-semibold text-red-500 hover:text-red-700
@@ -481,8 +481,8 @@ function Dashboard({ onLogout }) {
 export default function Admin({ onExit }) {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('fu_admin') === '1')
 
-  if (!authed) return <LoginScreen onLogin={() => setAuthed(true)} />
-  return <Dashboard onLogout={() => { setAuthed(false); onExit() }} />
+  if (!authed) return <LoginScreen onLogin={() => setAuthed(true)} onExit={onExit} />
+  return <Dashboard onLogout={() => { setAuthed(false); onExit() }} onExit={onExit} />
 }
 
 /* Helpers */
